@@ -1,11 +1,13 @@
-# api documentation for  [johnny-five (v0.10.6)](https://johnny-five.io)  [![npm package](https://img.shields.io/npm/v/npmdoc-johnny-five.svg?style=flat-square)](https://www.npmjs.org/package/npmdoc-johnny-five) [![travis-ci.org build-status](https://api.travis-ci.org/npmdoc/node-npmdoc-johnny-five.svg)](https://travis-ci.org/npmdoc/node-npmdoc-johnny-five)
+# api documentation for  [johnny-five (v0.10.7)](https://johnny-five.io)  [![npm package](https://img.shields.io/npm/v/npmdoc-johnny-five.svg?style=flat-square)](https://www.npmjs.org/package/npmdoc-johnny-five) [![travis-ci.org build-status](https://api.travis-ci.org/npmdoc/node-npmdoc-johnny-five.svg)](https://travis-ci.org/npmdoc/node-npmdoc-johnny-five)
 #### The JavaScript Robotics and Hardware Programming Framework. Use with: Arduino (all models), Electric Imp, Beagle Bone, Intel Galileo & Edison, Linino One, Pinoccio, pcDuino3, Raspberry Pi, Particle/Spark Core & Photon, Tessel 2, TI Launchpad and more!
 
 [![NPM](https://nodei.co/npm/johnny-five.png?downloads=true)](https://www.npmjs.com/package/johnny-five)
 
-[![apidoc](https://npmdoc.github.io/node-npmdoc-johnny-five/build/screen-capture.buildNpmdoc.browser._2Fhome_2Ftravis_2Fbuild_2Fnpmdoc_2Fnode-npmdoc-johnny-five_2Ftmp_2Fbuild_2Fapidoc.html.png)](https://npmdoc.github.io/node-npmdoc-johnny-five/build..beta..travis-ci.org/apidoc.html)
+[![apidoc](https://npmdoc.github.io/node-npmdoc-johnny-five/build/screenCapture.buildNpmdoc.browser.%2Fhome%2Ftravis%2Fbuild%2Fnpmdoc%2Fnode-npmdoc-johnny-five%2Ftmp%2Fbuild%2Fapidoc.html.png)](https://npmdoc.github.io/node-npmdoc-johnny-five/build/apidoc.html)
 
-![package-listing](https://npmdoc.github.io/node-npmdoc-johnny-five/build/screen-capture.npmPackageListing.svg)
+![npmPackageListing](https://npmdoc.github.io/node-npmdoc-johnny-five/build/screenCapture.npmPackageListing.svg)
+
+![npmPackageDependencyTree](https://npmdoc.github.io/node-npmdoc-johnny-five/build/screenCapture.npmPackageDependencyTree.svg)
 
 
 
@@ -448,7 +450,7 @@
     "description": "The JavaScript Robotics and Hardware Programming Framework. Use with: Arduino (all models), Electric Imp, Beagle Bone, Intel Galileo & Edison, Linino One, Pinoccio, pcDuino3, Raspberry Pi, Particle/Spark Core & Photon, Tessel 2, TI Launchpad and more!",
     "devDependencies": {
         "async": "~0.9.0",
-        "copy-paste": "~0.3.0",
+        "copy-paste": "^1.3.0",
         "coveralls": "^2.11.9",
         "grunt": "~0.4.5",
         "grunt-cli": "~0.1.13",
@@ -457,22 +459,22 @@
         "grunt-contrib-watch": "~0.6.1",
         "grunt-jsbeautifier": "~0.2.10",
         "grunt-jscs": "~2.3.0",
-        "istanbul": "^0.4.4",
         "keypress": "latest",
         "mock-firmata": "latest",
+        "nyc": "^10.2.0",
         "optimist": "~0.6.1",
         "shelljs": "^0.3.0",
         "sinon": "~1.10.2"
     },
     "directories": {},
     "dist": {
-        "shasum": "33b2d2dafad9c273531010bd24cf0f75f29af303",
-        "tarball": "https://registry.npmjs.org/johnny-five/-/johnny-five-0.10.6.tgz"
+        "shasum": "7dfc02cbfbaa78c349e9fa4bf041f0ec90eb189d",
+        "tarball": "https://registry.npmjs.org/johnny-five/-/johnny-five-0.10.7.tgz"
     },
     "engines": {
         "node": ">=0.10.0"
     },
-    "gitHead": "cbde0f6115ccde74b93c08704c7a577784023478",
+    "gitHead": "562d37b659f5132c82d7e5e8dd670169b20143d9",
     "homepage": "https://johnny-five.io",
     "keywords": [
         "arduino",
@@ -629,11 +631,11 @@
         "url": "git://github.com/rwaldron/johnny-five.git"
     },
     "scripts": {
-        "coveralls": "cat ./coverage/lcov.info | coveralls",
+        "coveralls": "nyc --reporter=lcov grunt nodeunit && cat ./coverage/lcov.info | coveralls",
         "test": "grunt",
-        "test-cover": "grunt jshint && istanbul cover node_modules/grunt-cli/bin/grunt nodeunit"
+        "test-cover": "nyc grunt nodeunit"
     },
-    "version": "0.10.6"
+    "version": "0.10.7"
 }
 ```
 
@@ -1153,6 +1155,7 @@
 1.  object <span class="apidocSignatureSpan">johnny-five.IMU.Drivers.</span>MS5611
 1.  object <span class="apidocSignatureSpan">johnny-five.IMU.Drivers.</span>SHT31D
 1.  object <span class="apidocSignatureSpan">johnny-five.IMU.Drivers.</span>SI7020
+1.  object <span class="apidocSignatureSpan">johnny-five.IMU.Drivers.</span>SI7021
 1.  object <span class="apidocSignatureSpan">johnny-five.IMU.Drivers.</span>TH02
 
 #### [module johnny-five.IR](#apidoc.module.johnny-five.IR)
@@ -4748,44 +4751,55 @@ function Light(opts) {
     };
   }
 
-  priv.set(this, state);
+  if (!this.toLux) {
+    this.toLux = opts.toLux || function(x) {
+      return x;
+    };
+  }
 
   Object.defineProperties(this, {
     value: {
       get: function() {
         return raw;
-      }
+      },
     },
     level: {
       get: function() {
         return this.toIntensityLevel(raw);
-      }
+      },
     },
-    // TODO:
-    //
-    // lux?
-    //
   });
 
-  if (typeof this.initialize === "function") {
+  priv.set(this, state);
+
+<span class="apidocCodeCommentSpan">  /* istanbul ignore else */
+</span>  if (typeof this.initialize === "function") {
     this.initialize(opts, function(data) {
       raw = data;
     });
   }
 
-  setInterval(function() {
-    if (raw === undefined) {
-      return;
-    }
+  if (typeof this.lux === "undefined") {
+    Object.defineProperty(this, "lux", {
+      get: function() {
+        return this.toLux(raw);
+      },
+    });
+  }
 
-    var data = {
-      level: this.level
-    };
+  var data = {
+    level: 0,
+    lux: 0,
+  };
+
+  setInterval(function() {
+    data.level = this.level;
+    data.lux = this.lux;
 
     this.emit("data", data);
 
-    if (this.level !== last) {
-      last = this.level;
+    if (raw !== last) {
+      last = raw;
       this.emit("change", data);
     }
   }.bind(this), freq);
@@ -5685,6 +5699,8 @@ function Sensor(opts) {
     return new Sensor(opts);
   }
 
+  // Defaults to 10-bit resolution
+  var resolution = 0x3FF;
   var raw = null;
   var last = -1;
   var samples = [];
@@ -5695,6 +5711,12 @@ function Sensor(opts) {
 
   if (!opts.type) {
     opts.type = "analog";
+  }
+
+  if (this.io.RESOLUTION &&
+      (this.io.RESOLUTION.ADC &&
+        (this.io.RESOLUTION.ADC !== resolution))) {
+    resolution = this.io.RESOLUTION.ADC;
   }
 
   // Set the pin to ANALOG (INPUT) mode
@@ -5720,7 +5742,7 @@ function Sensor(opts) {
   priv.set(this, state);
 
   // Sensor instance properties
-  this.range = opts.range || [0, 1023];
+  this.range = opts.range || [0, resolution];
   this.limit = opts.limit || null;
   this.threshold = opts.threshold === undefined ? 1 : opts.threshold;
   this.isScaled = false;
@@ -5748,7 +5770,8 @@ function Sensor(opts) {
     if (opts.type === "digital") {
       this.emit("data", raw);
 
-      if (last !== raw) {
+<span class="apidocCodeCommentSpan">      /* istanbul ignore else */
+</span>      if (last !== raw) {
         this.emit("change", raw);
         last = raw;
       }
@@ -5807,8 +5830,8 @@ function Sensor(opts) {
         }
 
         return raw === null ? 0 :
-          Fn.map(this.raw, 0, 1023, 0, 255) | 0;
-      }
+          Fn.map(this.raw, 0, resolution, 0, 255) | 0;
+      },
     },
     constrained: {
       get: function() {
@@ -5824,20 +5847,9 @@ function Sensor(opts) {
       get: function() {
         var state = priv.get(this);
         var booleanBarrier = state.booleanBarrier;
-        var scale = state.scale || [0, 1023];
+        var scale = state.scale || [0, resolution];
 
-        if (booleanBarrier === null) {
-          booleanBarrier = scale[0] + (scale[1] - scale[0]) / 2;
-        }
-
-        return this.value > booleanBarrier;
-      }
-    },
-    scaled: {
-      get: function() {
-        var mapped, constrain;
-
-        if (state.scale && raw !== null) { ...
+        if (boolean ...
 ```
 - example usage
 ```shell
@@ -18301,44 +18313,55 @@ function Light(opts) {
     };
   }
 
-  priv.set(this, state);
+  if (!this.toLux) {
+    this.toLux = opts.toLux || function(x) {
+      return x;
+    };
+  }
 
   Object.defineProperties(this, {
     value: {
       get: function() {
         return raw;
-      }
+      },
     },
     level: {
       get: function() {
         return this.toIntensityLevel(raw);
-      }
+      },
     },
-    // TODO:
-    //
-    // lux?
-    //
   });
 
-  if (typeof this.initialize === "function") {
+  priv.set(this, state);
+
+<span class="apidocCodeCommentSpan">  /* istanbul ignore else */
+</span>  if (typeof this.initialize === "function") {
     this.initialize(opts, function(data) {
       raw = data;
     });
   }
 
-  setInterval(function() {
-    if (raw === undefined) {
-      return;
-    }
+  if (typeof this.lux === "undefined") {
+    Object.defineProperty(this, "lux", {
+      get: function() {
+        return this.toLux(raw);
+      },
+    });
+  }
 
-    var data = {
-      level: this.level
-    };
+  var data = {
+    level: 0,
+    lux: 0,
+  };
+
+  setInterval(function() {
+    data.level = this.level;
+    data.lux = this.lux;
 
     this.emit("data", data);
 
-    if (this.level !== last) {
-      last = this.level;
+    if (raw !== last) {
+      last = raw;
       this.emit("change", data);
     }
   }.bind(this), freq);
@@ -21418,11 +21441,19 @@ initialize = function (callback) {
   cmd.on("exit", function() {
     state.board.emit("exit");
     state.board.warn("Board", "Closing.");
-    process.nextTick(process.reallyExit);
+
+    var interval = setInterval(function() {
+<span class="apidocCodeCommentSpan">      /* istanbul ignore else */
+</span>      if (!state.board.io.pending) {
+        clearInterval(interval);
+        process.nextTick(process.reallyExit);
+      }
+    }, 1);
   });
 
   this.inject(state.opts);
 
+  /* istanbul ignore else */
   if (callback) {
     process.nextTick(callback);
   }
@@ -21478,6 +21509,8 @@ function Sensor(opts) {
     return new Sensor(opts);
   }
 
+  // Defaults to 10-bit resolution
+  var resolution = 0x3FF;
   var raw = null;
   var last = -1;
   var samples = [];
@@ -21488,6 +21521,12 @@ function Sensor(opts) {
 
   if (!opts.type) {
     opts.type = "analog";
+  }
+
+  if (this.io.RESOLUTION &&
+      (this.io.RESOLUTION.ADC &&
+        (this.io.RESOLUTION.ADC !== resolution))) {
+    resolution = this.io.RESOLUTION.ADC;
   }
 
   // Set the pin to ANALOG (INPUT) mode
@@ -21513,7 +21552,7 @@ function Sensor(opts) {
   priv.set(this, state);
 
   // Sensor instance properties
-  this.range = opts.range || [0, 1023];
+  this.range = opts.range || [0, resolution];
   this.limit = opts.limit || null;
   this.threshold = opts.threshold === undefined ? 1 : opts.threshold;
   this.isScaled = false;
@@ -21541,7 +21580,8 @@ function Sensor(opts) {
     if (opts.type === "digital") {
       this.emit("data", raw);
 
-      if (last !== raw) {
+<span class="apidocCodeCommentSpan">      /* istanbul ignore else */
+</span>      if (last !== raw) {
         this.emit("change", raw);
         last = raw;
       }
@@ -21600,8 +21640,8 @@ function Sensor(opts) {
         }
 
         return raw === null ? 0 :
-          Fn.map(this.raw, 0, 1023, 0, 255) | 0;
-      }
+          Fn.map(this.raw, 0, resolution, 0, 255) | 0;
+      },
     },
     constrained: {
       get: function() {
@@ -21617,20 +21657,9 @@ function Sensor(opts) {
       get: function() {
         var state = priv.get(this);
         var booleanBarrier = state.booleanBarrier;
-        var scale = state.scale || [0, 1023];
+        var scale = state.scale || [0, resolution];
 
-        if (booleanBarrier === null) {
-          booleanBarrier = scale[0] + (scale[1] - scale[0]) / 2;
-        }
-
-        return this.value > booleanBarrier;
-      }
-    },
-    scaled: {
-      get: function() {
-        var mapped, constrain;
-
-        if (state.scale && raw !== null) { ...
+        if (boolean ...
 ```
 - example usage
 ```shell
@@ -21728,7 +21757,8 @@ n/a
 disable = function () {
   var state = priv.get(this);
 
-  if (state.enabled) {
+<span class="apidocCodeCommentSpan">  /* istanbul ignore else */
+</span>  if (state.enabled) {
     state.enabled = false;
     state.previousFreq = state.freq;
     this.freq = null;
@@ -21748,7 +21778,8 @@ n/a
 enable = function () {
   var state = priv.get(this);
 
-  if (!state.enabled) {
+<span class="apidocCodeCommentSpan">  /* istanbul ignore else */
+</span>  if (!state.enabled) {
     this.freq = state.freq || state.previousFreq;
   }
 
@@ -21765,7 +21796,7 @@ n/a
 ```javascript
 fscaleTo = function (low, high) {
   var scale = Array.isArray(low) ? low : [low, high];
-  return Fn.fmap(this.raw, 0, 1023, scale[0], scale[1]);
+  return Fn.fmap(this.raw, 0, this.resolution, scale[0], scale[1]);
 }
 ```
 - example usage
@@ -21811,7 +21842,7 @@ function maxLineValue() {
 ```javascript
 scaleTo = function (low, high) {
   var scale = Array.isArray(low) ? low : [low, high];
-  return Fn.map(this.raw, 0, 1023, scale[0], scale[1]);
+  return Fn.map(this.raw, 0, this.resolution, scale[0], scale[1]);
 }
 ```
 - example usage
