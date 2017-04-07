@@ -51,7 +51,7 @@
 
         href="https://johnny-five.io"
 
-    >johnny-five (v0.10.6)</a>
+    >johnny-five (v0.10.7)</a>
 </h1>
 <h4>The JavaScript Robotics and Hardware Programming Framework. Use with: Arduino (all models), Electric Imp, Beagle Bone, Intel Galileo & Edison, Linino One, Pinoccio, pcDuino3, Raspberry Pi, Particle/Spark Core & Photon, Tessel 2, TI Launchpad and more!</h4>
 <div class="apidocSectionDiv"><a
@@ -3724,6 +3724,12 @@
         <li>
 
             <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">johnny-five.IMU.Drivers.</span>SI7020</span>
+
+        </li>
+
+        <li>
+
+            <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">johnny-five.IMU.Drivers.</span>SI7021</span>
 
         </li>
 
@@ -10792,44 +10798,55 @@ board.on(&#x22;ready&#x22;, function() {
     };
   }
 
-  priv.set(this, state);
+  if (!this.toLux) {
+    this.toLux = opts.toLux || function(x) {
+      return x;
+    };
+  }
 
   Object.defineProperties(this, {
     value: {
       get: function() {
         return raw;
-      }
+      },
     },
     level: {
       get: function() {
         return this.toIntensityLevel(raw);
-      }
+      },
     },
-    // TODO:
-    //
-    // lux?
-    //
   });
 
-  if (typeof this.initialize === &#x22;function&#x22;) {
+  priv.set(this, state);
+
+<span class="apidocCodeCommentSpan">  /* istanbul ignore else */
+</span>  if (typeof this.initialize === &#x22;function&#x22;) {
     this.initialize(opts, function(data) {
       raw = data;
     });
   }
 
-  setInterval(function() {
-    if (raw === undefined) {
-      return;
-    }
+  if (typeof this.lux === &#x22;undefined&#x22;) {
+    Object.defineProperty(this, &#x22;lux&#x22;, {
+      get: function() {
+        return this.toLux(raw);
+      },
+    });
+  }
 
-    var data = {
-      level: this.level
-    };
+  var data = {
+    level: 0,
+    lux: 0,
+  };
+
+  setInterval(function() {
+    data.level = this.level;
+    data.lux = this.lux;
 
     this.emit(&#x22;data&#x22;, data);
 
-    if (this.level !== last) {
-      last = this.level;
+    if (raw !== last) {
+      last = raw;
       this.emit(&#x22;change&#x22;, data);
     }
   }.bind(this), freq);
@@ -11783,6 +11800,8 @@ board.on(&#x22;ready&#x22;, function() {
     return new Sensor(opts);
   }
 
+  // Defaults to 10-bit resolution
+  var resolution = 0x3FF;
   var raw = null;
   var last = -1;
   var samples = [];
@@ -11793,6 +11812,12 @@ board.on(&#x22;ready&#x22;, function() {
 
   if (!opts.type) {
     opts.type = &#x22;analog&#x22;;
+  }
+
+  if (this.io.RESOLUTION &#x26;&#x26;
+      (this.io.RESOLUTION.ADC &#x26;&#x26;
+        (this.io.RESOLUTION.ADC !== resolution))) {
+    resolution = this.io.RESOLUTION.ADC;
   }
 
   // Set the pin to ANALOG (INPUT) mode
@@ -11818,7 +11843,7 @@ board.on(&#x22;ready&#x22;, function() {
   priv.set(this, state);
 
   // Sensor instance properties
-  this.range = opts.range || [0, 1023];
+  this.range = opts.range || [0, resolution];
   this.limit = opts.limit || null;
   this.threshold = opts.threshold === undefined ? 1 : opts.threshold;
   this.isScaled = false;
@@ -11846,7 +11871,8 @@ board.on(&#x22;ready&#x22;, function() {
     if (opts.type === &#x22;digital&#x22;) {
       this.emit(&#x22;data&#x22;, raw);
 
-      if (last !== raw) {
+<span class="apidocCodeCommentSpan">      /* istanbul ignore else */
+</span>      if (last !== raw) {
         this.emit(&#x22;change&#x22;, raw);
         last = raw;
       }
@@ -11905,8 +11931,8 @@ board.on(&#x22;ready&#x22;, function() {
         }
 
         return raw === null ? 0 :
-          Fn.map(this.raw, 0, 1023, 0, 255) | 0;
-      }
+          Fn.map(this.raw, 0, resolution, 0, 255) | 0;
+      },
     },
     constrained: {
       get: function() {
@@ -11922,20 +11948,9 @@ board.on(&#x22;ready&#x22;, function() {
       get: function() {
         var state = priv.get(this);
         var booleanBarrier = state.booleanBarrier;
-        var scale = state.scale || [0, 1023];
+        var scale = state.scale || [0, resolution];
 
-        if (booleanBarrier === null) {
-          booleanBarrier = scale[0] + (scale[1] - scale[0]) / 2;
-        }
-
-        return this.value &#x3e; booleanBarrier;
-      }
-    },
-    scaled: {
-      get: function() {
-        var mapped, constrain;
-
-        if (state.scale &#x26;&#x26; raw !== null) { ...</pre></li>
+        if (boolean ...</pre></li>
     <li>example usage<pre class="apidocCodePre">n/a</pre></li>
     </ul>
 
@@ -21831,6 +21846,8 @@ toScaledEuler: {
 
 
 
+
+
 </div>
 
 <div class="apidocSectionDiv">
@@ -25800,44 +25817,55 @@ board.<span class="apidocCodeKeywordSpan">on</span>(&#x22;ready&#x22;, function(
     };
   }
 
-  priv.set(this, state);
+  if (!this.toLux) {
+    this.toLux = opts.toLux || function(x) {
+      return x;
+    };
+  }
 
   Object.defineProperties(this, {
     value: {
       get: function() {
         return raw;
-      }
+      },
     },
     level: {
       get: function() {
         return this.toIntensityLevel(raw);
-      }
+      },
     },
-    // TODO:
-    //
-    // lux?
-    //
   });
 
-  if (typeof this.initialize === &#x22;function&#x22;) {
+  priv.set(this, state);
+
+<span class="apidocCodeCommentSpan">  /* istanbul ignore else */
+</span>  if (typeof this.initialize === &#x22;function&#x22;) {
     this.initialize(opts, function(data) {
       raw = data;
     });
   }
 
-  setInterval(function() {
-    if (raw === undefined) {
-      return;
-    }
+  if (typeof this.lux === &#x22;undefined&#x22;) {
+    Object.defineProperty(this, &#x22;lux&#x22;, {
+      get: function() {
+        return this.toLux(raw);
+      },
+    });
+  }
 
-    var data = {
-      level: this.level
-    };
+  var data = {
+    level: 0,
+    lux: 0,
+  };
+
+  setInterval(function() {
+    data.level = this.level;
+    data.lux = this.lux;
 
     this.emit(&#x22;data&#x22;, data);
 
-    if (this.level !== last) {
-      last = this.level;
+    if (raw !== last) {
+      last = raw;
       this.emit(&#x22;change&#x22;, data);
     }
   }.bind(this), freq);
@@ -29271,11 +29299,19 @@ board.<span class="apidocCodeKeywordSpan">on</span>(&#x22;ready&#x22;, function(
   cmd.on(&#x22;exit&#x22;, function() {
     state.board.emit(&#x22;exit&#x22;);
     state.board.warn(&#x22;Board&#x22;, &#x22;Closing.&#x22;);
-    process.nextTick(process.reallyExit);
+
+    var interval = setInterval(function() {
+<span class="apidocCodeCommentSpan">      /* istanbul ignore else */
+</span>      if (!state.board.io.pending) {
+        clearInterval(interval);
+        process.nextTick(process.reallyExit);
+      }
+    }, 1);
   });
 
   this.inject(state.opts);
 
+  /* istanbul ignore else */
   if (callback) {
     process.nextTick(callback);
   }
@@ -29338,6 +29374,8 @@ setInterval(function() {
     return new Sensor(opts);
   }
 
+  // Defaults to 10-bit resolution
+  var resolution = 0x3FF;
   var raw = null;
   var last = -1;
   var samples = [];
@@ -29348,6 +29386,12 @@ setInterval(function() {
 
   if (!opts.type) {
     opts.type = &#x22;analog&#x22;;
+  }
+
+  if (this.io.RESOLUTION &#x26;&#x26;
+      (this.io.RESOLUTION.ADC &#x26;&#x26;
+        (this.io.RESOLUTION.ADC !== resolution))) {
+    resolution = this.io.RESOLUTION.ADC;
   }
 
   // Set the pin to ANALOG (INPUT) mode
@@ -29373,7 +29417,7 @@ setInterval(function() {
   priv.set(this, state);
 
   // Sensor instance properties
-  this.range = opts.range || [0, 1023];
+  this.range = opts.range || [0, resolution];
   this.limit = opts.limit || null;
   this.threshold = opts.threshold === undefined ? 1 : opts.threshold;
   this.isScaled = false;
@@ -29401,7 +29445,8 @@ setInterval(function() {
     if (opts.type === &#x22;digital&#x22;) {
       this.emit(&#x22;data&#x22;, raw);
 
-      if (last !== raw) {
+<span class="apidocCodeCommentSpan">      /* istanbul ignore else */
+</span>      if (last !== raw) {
         this.emit(&#x22;change&#x22;, raw);
         last = raw;
       }
@@ -29460,8 +29505,8 @@ setInterval(function() {
         }
 
         return raw === null ? 0 :
-          Fn.map(this.raw, 0, 1023, 0, 255) | 0;
-      }
+          Fn.map(this.raw, 0, resolution, 0, 255) | 0;
+      },
     },
     constrained: {
       get: function() {
@@ -29477,20 +29522,9 @@ setInterval(function() {
       get: function() {
         var state = priv.get(this);
         var booleanBarrier = state.booleanBarrier;
-        var scale = state.scale || [0, 1023];
+        var scale = state.scale || [0, resolution];
 
-        if (booleanBarrier === null) {
-          booleanBarrier = scale[0] + (scale[1] - scale[0]) / 2;
-        }
-
-        return this.value &#x3e; booleanBarrier;
-      }
-    },
-    scaled: {
-      get: function() {
-        var mapped, constrain;
-
-        if (state.scale &#x26;&#x26; raw !== null) { ...</pre></li>
+        if (boolean ...</pre></li>
     <li>example usage<pre class="apidocCodePre">n/a</pre></li>
     </ul>
 
@@ -29607,7 +29641,8 @@ setInterval(function() {
     <li>description and source-code<pre class="apidocCodePre">disable = function () {
   var state = priv.get(this);
 
-  if (state.enabled) {
+<span class="apidocCodeCommentSpan">  /* istanbul ignore else */
+</span>  if (state.enabled) {
     state.enabled = false;
     state.previousFreq = state.freq;
     this.freq = null;
@@ -29630,7 +29665,8 @@ setInterval(function() {
     <li>description and source-code<pre class="apidocCodePre">enable = function () {
   var state = priv.get(this);
 
-  if (!state.enabled) {
+<span class="apidocCodeCommentSpan">  /* istanbul ignore else */
+</span>  if (!state.enabled) {
     this.freq = state.freq || state.previousFreq;
   }
 
@@ -29650,7 +29686,7 @@ setInterval(function() {
     <ul>
     <li>description and source-code<pre class="apidocCodePre">fscaleTo = function (low, high) {
   var scale = Array.isArray(low) ? low : [low, high];
-  return Fn.fmap(this.raw, 0, 1023, scale[0], scale[1]);
+  return Fn.fmap(this.raw, 0, this.resolution, scale[0], scale[1]);
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">n/a</pre></li>
     </ul>
@@ -29703,7 +29739,7 @@ function maxLineValue() {
     <ul>
     <li>description and source-code<pre class="apidocCodePre">scaleTo = function (low, high) {
   var scale = Array.isArray(low) ? low : [low, high];
-  return Fn.map(this.raw, 0, 1023, scale[0], scale[1]);
+  return Fn.map(this.raw, 0, this.resolution, scale[0], scale[1]);
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">n/a</pre></li>
     </ul>
