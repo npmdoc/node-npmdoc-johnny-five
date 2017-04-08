@@ -3,7 +3,7 @@
 
 [![NPM](https://nodei.co/npm/johnny-five.png?downloads=true)](https://www.npmjs.com/package/johnny-five)
 
-[![apidoc](https://npmdoc.github.io/node-npmdoc-johnny-five/build/screenCapture.buildNpmdoc.browser.%2Fhome%2Ftravis%2Fbuild%2Fnpmdoc%2Fnode-npmdoc-johnny-five%2Ftmp%2Fbuild%2Fapidoc.html.png)](https://npmdoc.github.io/node-npmdoc-johnny-five/build/apidoc.html)
+[![apidoc](https://npmdoc.github.io/node-npmdoc-johnny-five/build/screenCapture.buildNpmdoc.browser.%252Fhome%252Ftravis%252Fbuild%252Fnpmdoc%252Fnode-npmdoc-johnny-five%252Ftmp%252Fbuild%252Fapidoc.html.png)](https://npmdoc.github.io/node-npmdoc-johnny-five/build/apidoc.html)
 
 ![npmPackageListing](https://npmdoc.github.io/node-npmdoc-johnny-five/build/screenCapture.npmPackageListing.svg)
 
