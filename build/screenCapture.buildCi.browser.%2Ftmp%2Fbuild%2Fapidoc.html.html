@@ -47,7 +47,7 @@
 }
 </style>
 <h1>api documentation for
-    <a href="https://johnny-five.io">johnny-five (v0.10.7)</a>
+    <a href="https://johnny-five.io">johnny-five (v0.10.9)</a>
 </h1>
 <h4>The JavaScript Robotics and Hardware Programming Framework. Use with: Arduino (all models), Electric Imp, Beagle Bone, Intel Galileo &amp; Edison, Linino One, Pinoccio, pcDuino3, Raspberry Pi, Particle/Spark Core &amp; Photon, Tessel 2, TI Launchpad and more!</h4>
 <div class="apidocSectionDiv"><a href="#apidoc.tableOfContents" id="apidoc.tableOfContents"><h1>table of contents</h1></a><ol>
@@ -972,6 +972,12 @@
         <li>
 
             <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">johnny-five.</span>sleep</span>
+
+        </li>
+
+        <li>
+
+            <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">johnny-five.</span>within</span>
 
         </li>
 
@@ -7678,6 +7684,19 @@
 
     </ol></li>
 
+    <li class="apidocModuleLi"><a href="#apidoc.module.johnny-five.within">module johnny-five.within</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.johnny-five.within.within">
+            function <span class="apidocSignatureSpan">johnny-five.</span>within
+            <span class="apidocSignatureSpan">(range, unit, callback)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
 </ol></div>
 
 <div class="apidocSectionDiv">
@@ -8236,7 +8255,7 @@
   // Either an IO instance was provided or isOnBoard is true
   if (!opts.port &amp;&amp; this.io !== null) {
     /* istanbul ignore next */
-    this.info("Device(s)", chalk.grey(this.io.name || "unknown"));
+    this.info("Available", chalk.grey(this.io.name || "unknown"));
 
     ["connect", "ready"].forEach(function(type) {
       this.io.once(type, function() {
@@ -9434,6 +9453,11 @@ board.on("ready", function() {
       requestPin: false
     }
   );
+
+  if (nonAddressable.includes(opts.controller) &amp;&amp;
+      typeof this.address === "undefined") {
+    this.address = Fn.uid();
+  }
 
   expander = active.get(this.address);
 
@@ -13357,6 +13381,8 @@ board.on("ready", function() {
 
 
 
+
+
 </div>
 
 <div class="apidocSectionDiv">
@@ -14573,7 +14599,7 @@ board.on("ready", function() {
   // Either an IO instance was provided or isOnBoard is true
   if (!opts.port &amp;&amp; this.io !== null) {
     /* istanbul ignore next */
-    this.info("Device(s)", chalk.grey(this.io.name || "unknown"));
+    this.info("Available", chalk.grey(this.io.name || "unknown"));
 
     ["connect", "ready"].forEach(function(type) {
       this.io.once(type, function() {
@@ -19578,6 +19604,11 @@ state.sensorStates = this.pins.<span class="apidocCodeKeywordSpan">map</span>(fu
     }
   );
 
+  if (nonAddressable.includes(opts.controller) &amp;&amp;
+      typeof this.address === "undefined") {
+    this.address = Fn.uid();
+  }
+
   expander = active.get(this.address);
 
   if (expander) {
@@ -23665,7 +23696,7 @@ board.on("ready", function() {
     } else if (typeof input === "string") {
 
       // color("#ffffff") or color("ffffff")
-      if (input.match(/^#?[0-9A-Fa-f]{6}$/)) {
+      if (/^#?[0-9A-Fa-f]{6}$/.test(input)) {
 
         // remove the leading # if there is one
         if (input.length === 7 &amp;&amp; input[0] === "#") {
@@ -23678,8 +23709,38 @@ board.on("ready", function() {
           blue: parseInt(input.slice(4, 6), 16)
         };
       } else {
-        // color name
-        return RGB.ToRGB(converter.keyword.rgb(input.toLowerCase()));
+        // color("rgba(r, g, b, a)") or color("rgb(r, g, b)")
+        // color("rgba(r g b a)") or color("rgb(r g b)")
+        if (/^rgb/.test(input)) {
+          var args = input.match(/^rgba?\(([^)]+)\)$/)[1].split(/[\s,]+/);
+
+          // If the values were %...
+          if (isPercentString(args[0])) {
+            args.forEach(function(value, index) {
+              // Only convert the first 3 values
+              if (index &lt;= 2) {
+                args[index] = Math.round((parseInt(value, 10) / 100) * 255);
+              }
+            });
+          }
+
+          update = {
+            red: parseInt(args[0], 10),
+            green: parseInt(args[1], 10),
+            blue: parseInt(args[2], 10)
+          };
+
+          // If rgba(...)
+          if (args.length &gt; 3) {
+            if (isPercentString(args[3])) {
+              args[3] = parseInt(args[3], 10) / 100;
+            }
+            update = RGB.ToScaledRGB(100 * parseFloat(args[3]), update);
+          }
+        } else {
+          // color name
+          return RGB.ToRGB(converter.keyword.rgb(input.toLowerCase()));
+        }
       }
     }
   } else {
@@ -33462,6 +33523,54 @@ if (port.sensor &amp;&amp; port.offset &amp;&amp; !EVS.isRawSensor(port)) {
     <li>description and source-code<pre class="apidocCodePre">nano = function (ns) {
   var start = process.hrtime();
   while (process.hrtime() &lt; start + ns) {}
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.johnny-five.within" id="apidoc.module.johnny-five.within">module johnny-five.within</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.johnny-five.within.within" id="apidoc.element.johnny-five.within.within">
+        function <span class="apidocSignatureSpan">johnny-five.</span>within
+        <span class="apidocSignatureSpan">(range, unit, callback)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">within = function (range, unit, callback) {
+  var upper;
+
+  if (typeof range === "number") {
+    upper = range;
+    range = [0, upper];
+  }
+
+  if (!Array.isArray(range)) {
+    throw new Error("within expected a range array");
+  }
+
+  if (typeof unit === "function") {
+    callback = unit;
+    unit = "value";
+  }
+
+  if (typeof this[unit] === "undefined") {
+    return this;
+  }
+
+  // Use the continuous read event for high resolution
+  this.on("data", function() {
+    var value = this[unit];
+    if (value &gt;= range[0] &amp;&amp; value &lt;= range[1]) {
+      callback.call(this, null, value);
+    }
+  }.bind(this));
+
+  return this;
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">n/a</pre></li>
     </ul>

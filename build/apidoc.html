@@ -51,7 +51,7 @@
 
         href="https://johnny-five.io"
 
-    >johnny-five (v0.10.7)</a>
+    >johnny-five (v0.10.9)</a>
 </h1>
 <h4>The JavaScript Robotics and Hardware Programming Framework. Use with: Arduino (all models), Electric Imp, Beagle Bone, Intel Galileo & Edison, Linino One, Pinoccio, pcDuino3, Raspberry Pi, Particle/Spark Core & Photon, Tessel 2, TI Launchpad and more!</h4>
 <div class="apidocSectionDiv"><a
@@ -979,6 +979,12 @@
         <li>
 
             <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">johnny-five.</span>sleep</span>
+
+        </li>
+
+        <li>
+
+            <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">johnny-five.</span>within</span>
 
         </li>
 
@@ -7685,6 +7691,19 @@
 
     </ol></li>
 
+    <li class="apidocModuleLi"><a href="#apidoc.module.johnny-five.within">module johnny-five.within</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.johnny-five.within.within">
+            function <span class="apidocSignatureSpan">johnny-five.</span>within
+            <span class="apidocSignatureSpan">(range, unit, callback)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
 </ol></div>
 
 <div class="apidocSectionDiv">
@@ -8243,7 +8262,7 @@
   // Either an IO instance was provided or isOnBoard is true
   if (!opts.port &#x26;&#x26; this.io !== null) {
     /* istanbul ignore next */
-    this.info(&#x22;Device(s)&#x22;, chalk.grey(this.io.name || &#x22;unknown&#x22;));
+    this.info(&#x22;Available&#x22;, chalk.grey(this.io.name || &#x22;unknown&#x22;));
 
     [&#x22;connect&#x22;, &#x22;ready&#x22;].forEach(function(type) {
       this.io.once(type, function() {
@@ -9441,6 +9460,11 @@ board.on(&#x22;ready&#x22;, function() {
       requestPin: false
     }
   );
+
+  if (nonAddressable.includes(opts.controller) &#x26;&#x26;
+      typeof this.address === &#x22;undefined&#x22;) {
+    this.address = Fn.uid();
+  }
 
   expander = active.get(this.address);
 
@@ -13364,6 +13388,8 @@ board.on(&#x22;ready&#x22;, function() {
 
 
 
+
+
 </div>
 
 <div class="apidocSectionDiv">
@@ -14580,7 +14606,7 @@ board.on(&#x22;ready&#x22;, function() {
   // Either an IO instance was provided or isOnBoard is true
   if (!opts.port &#x26;&#x26; this.io !== null) {
     /* istanbul ignore next */
-    this.info(&#x22;Device(s)&#x22;, chalk.grey(this.io.name || &#x22;unknown&#x22;));
+    this.info(&#x22;Available&#x22;, chalk.grey(this.io.name || &#x22;unknown&#x22;));
 
     [&#x22;connect&#x22;, &#x22;ready&#x22;].forEach(function(type) {
       this.io.once(type, function() {
@@ -19585,6 +19611,11 @@ state.sensorStates = this.pins.<span class="apidocCodeKeywordSpan">map</span>(fu
     }
   );
 
+  if (nonAddressable.includes(opts.controller) &#x26;&#x26;
+      typeof this.address === &#x22;undefined&#x22;) {
+    this.address = Fn.uid();
+  }
+
   expander = active.get(this.address);
 
   if (expander) {
@@ -23672,7 +23703,7 @@ board.on(&#x22;ready&#x22;, function() {
     } else if (typeof input === &#x22;string&#x22;) {
 
       // color(&#x22;#ffffff&#x22;) or color(&#x22;ffffff&#x22;)
-      if (input.match(/^#?[0-9A-Fa-f]{6}$/)) {
+      if (/^#?[0-9A-Fa-f]{6}$/.test(input)) {
 
         // remove the leading # if there is one
         if (input.length === 7 &#x26;&#x26; input[0] === &#x22;#&#x22;) {
@@ -23685,8 +23716,38 @@ board.on(&#x22;ready&#x22;, function() {
           blue: parseInt(input.slice(4, 6), 16)
         };
       } else {
-        // color name
-        return RGB.ToRGB(converter.keyword.rgb(input.toLowerCase()));
+        // color(&#x22;rgba(r, g, b, a)&#x22;) or color(&#x22;rgb(r, g, b)&#x22;)
+        // color(&#x22;rgba(r g b a)&#x22;) or color(&#x22;rgb(r g b)&#x22;)
+        if (/^rgb/.test(input)) {
+          var args = input.match(/^rgba?\(([^)]+)\)$/)[1].split(/[\s,]+/);
+
+          // If the values were %...
+          if (isPercentString(args[0])) {
+            args.forEach(function(value, index) {
+              // Only convert the first 3 values
+              if (index &#x3c;= 2) {
+                args[index] = Math.round((parseInt(value, 10) / 100) * 255);
+              }
+            });
+          }
+
+          update = {
+            red: parseInt(args[0], 10),
+            green: parseInt(args[1], 10),
+            blue: parseInt(args[2], 10)
+          };
+
+          // If rgba(...)
+          if (args.length &#x3e; 3) {
+            if (isPercentString(args[3])) {
+              args[3] = parseInt(args[3], 10) / 100;
+            }
+            update = RGB.ToScaledRGB(100 * parseFloat(args[3]), update);
+          }
+        } else {
+          // color name
+          return RGB.ToRGB(converter.keyword.rgb(input.toLowerCase()));
+        }
       }
     }
   } else {
@@ -33469,6 +33530,54 @@ if (port.sensor &#x26;&#x26; port.offset &#x26;&#x26; !EVS.isRawSensor(port)) {
     <li>description and source-code<pre class="apidocCodePre">nano = function (ns) {
   var start = process.hrtime();
   while (process.hrtime() &#x3c; start + ns) {}
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.johnny-five.within" id="apidoc.module.johnny-five.within">module johnny-five.within</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.johnny-five.within.within" id="apidoc.element.johnny-five.within.within">
+        function <span class="apidocSignatureSpan">johnny-five.</span>within
+        <span class="apidocSignatureSpan">(range, unit, callback)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">within = function (range, unit, callback) {
+  var upper;
+
+  if (typeof range === &#x22;number&#x22;) {
+    upper = range;
+    range = [0, upper];
+  }
+
+  if (!Array.isArray(range)) {
+    throw new Error(&#x22;within expected a range array&#x22;);
+  }
+
+  if (typeof unit === &#x22;function&#x22;) {
+    callback = unit;
+    unit = &#x22;value&#x22;;
+  }
+
+  if (typeof this[unit] === &#x22;undefined&#x22;) {
+    return this;
+  }
+
+  // Use the continuous read event for high resolution
+  this.on(&#x22;data&#x22;, function() {
+    var value = this[unit];
+    if (value &#x3e;= range[0] &#x26;&#x26; value &#x3c;= range[1]) {
+      callback.call(this, null, value);
+    }
+  }.bind(this));
+
+  return this;
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">n/a</pre></li>
     </ul>
